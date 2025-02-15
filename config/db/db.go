@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm/logger"
 
 	"github.com/aayushchugh/timy-api/config/env"
+	"github.com/aayushchugh/timy-api/internal/models"
 )
 
 var DB *gorm.DB
@@ -23,6 +24,10 @@ func ConnectDB() {
 
 	if err != nil {
 		log.Fatal("Failed to connect to database", err)
+	}
+
+	if err := db.AutoMigrate(&models.User{}); err != nil {
+		log.Fatal("Failed to migrate database", err)
 	}
 
 	DB = db
