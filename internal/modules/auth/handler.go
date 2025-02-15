@@ -9,7 +9,7 @@ import (
 )
 
 func PostSignupHandler(c *fiber.Ctx) error {
-	req := new(SignupRequestBody)
+	req := c.Locals("validatedBody").(*SignupRequestBody)
 	if err := c.BodyParser(req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "invalid request body"})
 	}

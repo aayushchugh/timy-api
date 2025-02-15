@@ -1,9 +1,14 @@
 package auth
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/aayushchugh/timy-api/internal/middlewares"
+	"github.com/gofiber/fiber/v2"
+)
 
 func SetupRoutes(app *fiber.App) {
 	router := app.Group("/auth")
 
-	router.Post("/signup", PostSignupHandler)
+	router.Post("/signup", middlewares.ValidateRequestBody(func() interface{} {
+		return &SignupRequestBody{}
+	}), PostSignupHandler)
 }
