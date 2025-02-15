@@ -7,6 +7,7 @@ import (
 	"github.com/aayushchugh/timy-api/internal/modules/health"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
 func main() {
@@ -21,6 +22,11 @@ func main() {
 		port = env.AppPort
 	}
 
+	app.Use(logger.New(logger.Config{
+		Format:     "[${time}] ${method} ${path}",
+		TimeFormat: "15:04:05",
+		TimeZone:   "Local",
+	}))
 	health.SetupRoutes(app)
 	auth.SetupRoutes(app)
 
