@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/aayushchugh/timy-api/config"
+	"github.com/aayushchugh/timy-api/config/db"
+	"github.com/aayushchugh/timy-api/config/env"
 	"github.com/aayushchugh/timy-api/internal/handler/health"
 	healthService "github.com/aayushchugh/timy-api/internal/service/health"
 	"github.com/gofiber/fiber/v2"
@@ -11,14 +12,16 @@ import (
 func main() {
 	app := fiber.New()
 
+	db.ConnectDB()
+
 	hs := healthService.NewHealthService()
 	healthHandler := health.NewHealthHandler(hs)
 
-	cfg := config.New()
+	env := env.NewEnv()
 	port := "8000"
 
-	if cfg.AppPort != "" {
-		port = cfg.AppPort
+	if env.AppPort != "" {
+		port = env.AppPort
 	}
 
 	health := app.Group("/health")
