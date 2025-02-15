@@ -1,18 +1,19 @@
 package auth
 
 import (
+	"time"
+
 	"github.com/aayushchugh/timy-api/config/db"
+	"github.com/aayushchugh/timy-api/config/env"
 	"github.com/aayushchugh/timy-api/internal/models"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func PostSignupHandler(c *fiber.Ctx) error {
 	req := c.Locals("validatedBody").(*SignupRequestBody)
-	if err := c.BodyParser(req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "invalid request body"})
-	}
 
 	var existingUser models.User
 	if err := db.DB.Where("email = ?", req.Email).First(&existingUser).Error; err == nil {
@@ -45,5 +46,63 @@ func PostSignupHandler(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": "user created successfully",
+	})
+}
+
+func PostLoginHandler(c *fiber.Ctx) error {
+	env := env.NewEnv()
+	req := c.Locals("validatedBody").(*LoginRequestBody)
+
+	// check if user exists
+	var user models.User
+	if err := db.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "invalid credentials",
+		})
+	}
+
+	// check if password is correct
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "invalid credentials",
+		})
+	}
+
+	// create access and refresh tokens
+
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": user.ID,
+		"exp":     time.Now().Add(time.Minute * 15).Unix(),
+	})
+
+	accessTokenString, err := accessToken.SignedString([]byte(env.JWTSecret))
+
+	if err != nil {
+		log.Error("error generating access token", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "internal server error",
+		})
+	}
+
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": user.ID,
+		"exp":     time.Now().Add(time.Hour * 24 * 15).Unix(), // 15 days
+	})
+
+	refreshTokenString, err := refreshToken.SignedString([]byte(env.JWTSecret))
+
+	if err != nil {
+		log.Error("error generating refresh token", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "internal server error",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "login successful",
+		"payload": fiber.Map{
+			"access_token":  accessTokenString,
+			"refresh_token": refreshTokenString,
+		},
 	})
 }
