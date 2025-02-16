@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/aayushchugh/timy-api/config/db"
 	"github.com/aayushchugh/timy-api/config/env"
+	"github.com/aayushchugh/timy-api/internal/middlewares"
 	"github.com/aayushchugh/timy-api/internal/modules/auth"
 	"github.com/aayushchugh/timy-api/internal/modules/health"
 	"github.com/gofiber/fiber/v2"
@@ -27,6 +28,7 @@ func main() {
 		TimeFormat: "15:04:05",
 		TimeZone:   "Local",
 	}))
+	app.Use(middlewares.GetUserFromRequest)
 	health.SetupRoutes(app)
 	auth.SetupRoutes(app)
 

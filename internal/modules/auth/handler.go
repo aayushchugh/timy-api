@@ -106,3 +106,24 @@ func PostLoginHandler(c *fiber.Ctx) error {
 		},
 	})
 }
+
+func GetMeHandler(c *fiber.Ctx) error {
+	user_id := c.Locals("user_id")
+
+	var user models.User
+	if err := db.DB.Where("id = ?", user_id).First(&user).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "internal server error",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "ok",
+		"payload": fiber.Map{
+			"user": fiber.Map{
+				"name":  user.Name,
+				"email": user.Email,
+			},
+		},
+	})
+}

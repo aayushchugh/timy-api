@@ -15,4 +15,6 @@ func SetupRoutes(app *fiber.App) {
 	router.Post("/login", middlewares.ValidateRequestBody(func() interface{} {
 		return &LoginRequestBody{}
 	}), PostLoginHandler)
+
+	router.Get("/me", GetMeHandler)
 }
